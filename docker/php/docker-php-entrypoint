@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+# Fix permissions
+chmod -R 0777 /var/www/html/data
+chmod -R 0777 /var/www/html/log
+chmod -R 0777 /var/www/html/temp
+
+echo "Started ..."
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- php "$@"
+fi
+
+exec "$@"

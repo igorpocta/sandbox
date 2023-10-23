@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+
+    # PHP App Service
+    app:
+        container_name: sandbox
+        build:
+            target: app_production
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - ./config/local.neon:/var/www/html/config/local.neon
+            - data_volume:/var/www/html/data:rw
+            - logs_volume:/var/www/html/log:rw
+
+    # PHP Cron Service
+    cron:
+        container_name: sandbox_cron
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+            target: app_cron
+        environment:
+            TIMEZONE: Europe/Prague
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        restart: "unless-stopped"
+        volumes:
+            - ./config/local.neon:/var/www/html/config/local.neon
+            - data_volume:/var/www/html/data
+            - logs_volume:/var/www/html/log
+
+    # Nginx Service
+    webserver:
+        container_name: sandbox_nginx
+        ports:
+            - "80:80"
+
+    db:
+        container_name: sandbox_db
+        image: mariadb:11.0.2
+        restart: "unless-stopped"
+        environment:
+            MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+            MARIADB_DATABASE: ${MARIADB_DATABASE:-web}
+            MARIADB_USER: ${MARIADB_USER:-user}
+            MARIADB_PASSWORD: ${MARIADB_PASSWORD:-user}
+            MARIADB_ROOT_HOST: ${MARIADB_ROOT_HOST:-%}
+        volumes:
+            - ./docker/mariadb/my.cnf:/etc/mysql/conf.d/my.cnf
+            - db_volume:/var/lib/mysql
+
+volumes:
+    logs_volume:
+        external: true
+        name: "sandbox_logs"
+    data_volume:
+        external: true
+        name: "sandbox_data"
+    db_volume:
+        external: true
+        name: "sandbox_db"

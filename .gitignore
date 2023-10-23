@@ -5,3 +5,4 @@
 vendor/
 config/.debug
 config/local.neon
+certificate/

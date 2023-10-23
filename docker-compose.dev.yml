@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+
+    # PHP App Service
+    app:
+        container_name: sandbox
+        build:
+            args:
+                GROUP_ID: ${GROUP_ID:-1000}
+                USER_ID: ${USER_ID:-1000}
+            target: app_development
+        volumes:
+            - ./:/var/www/html
+
+    # Nginx Service
+    webserver:
+        container_name: sandbox_www
+        ports:
+            - "443:443"
+        volumes:
+            - ./docker/nginx/ssl.conf:/etc/nginx/ssl.conf
+            - ./certificate/:/etc/nginx/certs/
+
+    # Database service
+    db:
+        container_name: sandbox_db
+        image: mariadb:11.0.2
+        restart: "unless-stopped"
+        environment:
+            MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root}
+            MARIADB_DATABASE: ${MARIADB_DATABASE:-web}
+            MARIADB_USER: ${MARIADB_USER:-user}
+            MARIADB_PASSWORD: ${MARIADB_PASSWORD:-user}
+            MARIADB_ROOT_HOST: ${MARIADB_ROOT_HOST:-%}
+        volumes:
+            - ./docker/mariadb/my.cnf:/etc/mysql/conf.d/my.cnf
+            - db_volume:/var/lib/mysql
+        ports:
+            - "3306:3306"
+
+    adminer:
+        image: adminer:latest
+        container_name: sandbox_adminer
+        restart: "unless-stopped"
+        ports:
+            - "8080:8080"
+
+volumes:
+    db_volume:
+        external: true
+        name: "sandbox_db"

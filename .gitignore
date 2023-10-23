@@ -2,4 +2,6 @@
 .idea/
 
 # App runtime
+vendor/
+config/.debug
 config/local.neon
